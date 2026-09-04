@@ -3,13 +3,15 @@ from __future__ import annotations
 import re
 import tempfile
 import unittest
+import zipfile
 from pathlib import Path
+from xml.etree import ElementTree
 
 from docx import Document
 from docx.table import Table
 from docx.text.paragraph import Paragraph
 
-from report_merger.core import ReportModel
+from report_merger.core import ReportModel, parse_report
 from report_merger.exporters import export_docx, export_xlsx
 
 
@@ -47,6 +49,43 @@ class PipelineTests(unittest.TestCase):
         ]
         self.assertEqual(len(table_blocks), 3)
         self.assertFalse(any("Nơi nhận" in block.text for block in table_blocks))
+
+    def test_docx_without_numbering_part_is_still_analyzed(self):
+        with tempfile.TemporaryDirectory() as folder:
+            source_path = Path(folder) / "source.docx"
+            no_numbering_path = Path(folder) / "without-numbering.docx"
+
+            document = Document()
+            document.add_paragraph("I. KHÁI QUÁT", style="Heading 1")
+            document.add_paragraph("Nội dung báo cáo vẫn phải được đọc.")
+            document.save(source_path)
+
+            with zipfile.ZipFile(source_path) as source, zipfile.ZipFile(
+                no_numbering_path, "w", zipfile.ZIP_DEFLATED
+            ) as target:
+                for item in source.infolist():
+                    if item.filename == "word/numbering.xml":
+                        continue
+                    data = source.read(item.filename)
+                    if item.filename == "word/_rels/document.xml.rels":
+                        root = ElementTree.fromstring(data)
+                        for relationship in list(root):
+                            if relationship.attrib.get("Type", "").endswith("/numbering"):
+                                root.remove(relationship)
+                        data = ElementTree.tostring(root, encoding="utf-8", xml_declaration=True)
+                    elif item.filename == "[Content_Types].xml":
+                        root = ElementTree.fromstring(data)
+                        for override in list(root):
+                            if override.attrib.get("PartName") == "/word/numbering.xml":
+                                root.remove(override)
+                        data = ElementTree.tostring(root, encoding="utf-8", xml_declaration=True)
+                    target.writestr(item, data)
+
+            report = parse_report(no_numbering_path, 0)
+
+            self.assertEqual(len(report.occurrences), 1)
+            self.assertEqual(report.occurrences[0].clean_title, "KHÁI QUÁT")
+            self.assertIn("Nội dung báo cáo", report.occurrences[0].content_text)
 
     def test_export_round_trip_contains_all_body_text(self):
         with tempfile.TemporaryDirectory() as folder:

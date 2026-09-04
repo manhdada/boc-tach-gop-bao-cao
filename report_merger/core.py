@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from docx import Document
+from docx.opc.constants import RELATIONSHIP_TYPE as RT
 from docx.oxml.ns import qn
 from docx.table import Table
 from docx.text.paragraph import Paragraph
@@ -140,7 +141,17 @@ class NumberingResolver:
         self.num_to_abs: dict[str, str] = {}
         self.levels: dict[tuple[str, int], tuple[str, str, int]] = {}
         self.counters: dict[str, list[int]] = {}
-        root = document.part.numbering_part.element
+        # The numbering part is optional in valid DOCX packages.  In particular,
+        # documents produced by converters or simplified Word templates may not
+        # contain word/numbering.xml at all.  python-docx's ``numbering_part``
+        # property tries to create a missing part and raises NotImplementedError,
+        # so look up the relationship directly and use an empty resolver when it
+        # is absent.  Manually typed markers and Heading styles are still parsed.
+        try:
+            numbering_part = document.part.part_related_by(RT.NUMBERING)
+        except KeyError:
+            return
+        root = numbering_part.element
         for num in root.findall(qn("w:num")):
             num_id = num.get(qn("w:numId"))
             abs_el = num.find(qn("w:abstractNumId"))

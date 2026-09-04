@@ -2,6 +2,8 @@
 
 Ứng dụng Windows chạy cục bộ, dùng để nhận diện các phần/mục trong nhiều báo cáo có cùng cấu trúc và nối nguyên văn nội dung của các mục tương ứng.
 
+**Phiên bản hiện tại: v0.2**
+
 ## Chức năng
 
 - Nhập nhiều file `.docx` và `.pdf` có lớp text; không xử lý PDF scan/OCR.
@@ -16,7 +18,7 @@
 
 ## Cách dùng nhanh
 
-1. Mở `BocTachBaoCao.exe` hoặc nhấp đúp `Chay_phan_mem.bat`.
+1. Mở `BoctachvaGopBaoCao.exe` hoặc nhấp đúp `Chay_phan_mem.bat`.
 2. Thêm/kéo thả các báo cáo.
 3. Đổi tên nguồn thành tên xã/đơn vị nếu cần.
 4. Bấm **Phân tích cấu trúc**.
@@ -39,3 +41,16 @@ Thì ta nên sửa như sau để phần mềm nhận diện đúng mục b.
 
 b) Cơ sở vật chất
 Cơ sở vật chất cơ bản đáp ứng....
+
+## Lịch sử phiên bản
+
+### v0.2
+
+- Sửa lỗi **“Không thể phân tích”** với một số file `.docx` không có thành phần `word/numbering.xml` hoặc quan hệ cấu hình đánh số.
+- Cấu hình đánh số trong DOCX giờ được xem là thành phần tùy chọn. Phần mềm vẫn nhận diện các tiêu đề được gõ thủ công và các kiểu Heading khi thành phần này không tồn tại.
+- Bổ sung kiểm thử hồi quy cho tài liệu không có cấu hình đánh số.
+- Đã kiểm tra trực tiếp với file từng gây lỗi `CN Lac Son.docx`: phân tích thành công 76 mục, không có cảnh báo.
+
+### v0.1
+
+- Phiên bản phát hành đầu tiên.
