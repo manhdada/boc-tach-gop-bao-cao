@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+.build/
+.build_deps/
+qa/
+samples/
+output/
